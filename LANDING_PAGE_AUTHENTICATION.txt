@@ -1,0 +1,516 @@
+# 14. LANDING PAGE, AUTHENTICATION, AND AUTOMATIC RESEARCH PROFILE DISCOVERY
+
+The application currently lacks a complete onboarding experience.
+
+Implement the following features.
+
+---
+
+# PUBLIC LANDING PAGE
+
+Route:
+
+/
+
+Create a premium institutional homepage for ESARA.
+
+Title:
+
+Enhanced Staff Assessment Repository Architecture (ESARA)
+
+Subtitle:
+
+An intelligent academic analytics platform for evaluating research productivity, scholarly impact, publication quality, and promotion readiness.
+
+Hero Section:
+
+* Modern research-themed illustration
+* Call-to-action buttons
+* Academic analytics preview
+
+Buttons:
+
+* Login
+* Create Account
+* Learn More
+
+---
+
+# HOME PAGE SECTIONS
+
+Section 1:
+Hero Banner
+
+Section 2:
+What ESARA Does
+
+Cards:
+
+Research Assessment
+
+Publication Analytics
+
+Citation Analysis
+
+Promotion Readiness
+
+Research Rankings
+
+Academic Intelligence
+
+---
+
+Section 3:
+How It Works
+
+Step 1:
+Create Academic Profile
+
+Step 2:
+Retrieve Publications
+
+Step 3:
+Verify Author Identity
+
+Step 4:
+Compute Research Score
+
+Step 5:
+Track Promotion Readiness
+
+---
+
+Section 4:
+Platform Features
+
+Interactive Analytics
+
+Automated Journal Discovery
+
+Research Rankings
+
+Promotion Engine
+
+Institutional Reports
+
+Research Intelligence
+
+---
+
+Section 5:
+Research Metrics Showcase
+
+Display example charts and rankings.
+
+---
+
+Section 6:
+Call To Action
+
+Buttons:
+
+Get Started
+
+Login
+
+---
+
+Section 7:
+Footer
+
+About
+
+Privacy
+
+Support
+
+Documentation
+
+---
+
+# LOGIN PAGE
+
+Route:
+
+/login
+
+Create a professional authentication page.
+
+Allow login as:
+
+Admin
+
+ICT Personnel
+
+Academic Staff
+
+Display demo credentials in development mode.
+
+Demo Accounts:
+
+Admin:
+[admin@esara.edu](mailto:admin@esara.edu)
+Admin123@
+
+ICT Personnel:
+[ict@esara.edu](mailto:ict@esara.edu)
+ICT123@
+
+Academic Staff:
+
+[arnold.ojugo@esara.edu](mailto:arnold.ojugo@esara.edu)
+Staff123@
+
+[maureen.akazwe@esara.edu](mailto:maureen.akazwe@esara.edu)
+Staff123@
+
+[patrick.ejeh@esara.edu](mailto:patrick.ejeh@esara.edu)
+Staff123@
+
+After login:
+
+Admin → Admin Dashboard
+
+ICT Personnel → ICT Dashboard
+
+Academic Staff → Staff Dashboard
+
+---
+
+# SIGNUP PAGE
+
+Route:
+
+/signup
+
+Create an academic staff registration system.
+
+Fields:
+
+Full Name
+
+Email
+
+Password
+
+Confirm Password
+
+Faculty
+
+Department
+
+Institution
+
+ORCID ID (Optional)
+
+Google Scholar Profile URL (Optional)
+
+Research Area
+
+Profile Photo
+
+Role
+
+Default role:
+
+Academic Staff
+
+Only Admin can create additional Admin or ICT accounts.
+
+Public registration should create Academic Staff accounts only.
+
+---
+
+# AUTOMATIC ACADEMIC PROFILE DISCOVERY
+
+After registration:
+
+Automatically start a profile discovery workflow.
+
+Step 1:
+
+Search OpenAlex using Full Name.
+
+Example:
+
+https://api.openalex.org/authors?search=FULL_NAME
+
+Step 2:
+
+Find matching authors.
+
+Step 3:
+
+Calculate matching confidence based on:
+
+Full Name
+
+Institution
+
+Department
+
+Research Area
+
+ORCID
+
+Google Scholar URL
+
+Step 4:
+
+Select highest-confidence match.
+
+Step 5:
+
+Import:
+
+Author Information
+
+Publications
+
+Citation Counts
+
+h-index
+
+Research Areas
+
+Journal Information
+
+Institution Information
+
+---
+
+# AUTOMATIC PUBLICATION IMPORT
+
+When a match is found:
+
+Automatically create:
+
+Research Profile
+
+Publication Repository
+
+Research Metrics
+
+Research Score
+
+Promotion Status
+
+Ranking
+
+without requiring manual intervention.
+
+Display progress:
+
+Discovering Author Profile
+
+Retrieving Publications
+
+Analyzing Citations
+
+Computing SRS
+
+Building Dashboard
+
+---
+
+# MANUAL RESEARCH DISCOVERY
+
+If automatic matching fails:
+
+Show a Research Discovery Wizard.
+
+Allow the user to search OpenAlex manually.
+
+Fields:
+
+Full Name
+
+Institution
+
+Department
+
+Research Area
+
+Publication Title
+
+DOI
+
+ORCID
+
+Publication Year
+
+Keywords
+
+Search Button
+
+---
+
+# OPENALEX SEARCH INTERFACE
+
+Create a dedicated interface:
+
+/research-discovery
+
+Users can:
+
+Search by Author
+
+Search by Publication
+
+Search by DOI
+
+Search by Journal
+
+Search by Institution
+
+Display matching results.
+
+Allow users to:
+
+Select publications
+
+Import publications
+
+Associate publications with profile
+
+---
+
+# PUBLICATION CLAIMING SYSTEM
+
+Sometimes publications may not be automatically matched.
+
+Create a Claim Publication workflow.
+
+Users can:
+
+Search OpenAlex
+
+Select publication
+
+Submit claim
+
+System verifies:
+
+Author Name Similarity
+
+Institution Similarity
+
+Research Area Similarity
+
+Publication Metadata
+
+If confidence exceeds threshold:
+
+Automatically approve.
+
+Otherwise:
+
+Send to ICT Personnel Verification Queue.
+
+---
+
+# FIRST-TIME USER EXPERIENCE
+
+After signup:
+
+Show onboarding wizard.
+
+Step 1:
+Profile Created
+
+Step 2:
+Research Profile Discovery
+
+Step 3:
+Publication Retrieval
+
+Step 4:
+Research Score Computation
+
+Step 5:
+Promotion Assessment
+
+Step 6:
+Dashboard Ready
+
+Display progress animations.
+
+---
+
+# PROFILE ENRICHMENT
+
+Users should be able to update:
+
+ORCID
+
+Google Scholar URL
+
+Scopus ID
+
+ResearchGate URL
+
+Personal Website
+
+Research Interests
+
+Whenever profile information changes:
+
+Automatically rerun OpenAlex discovery.
+
+---
+
+# NO DATA FALLBACK
+
+If OpenAlex returns no results:
+
+Generate realistic academic records.
+
+Create:
+
+Publications
+
+Citation Counts
+
+Journal Metrics
+
+Research Areas
+
+h-index
+
+SRS
+
+Promotion Status
+
+Ranking
+
+Mark records:
+
+source = "simulated"
+
+Allow later replacement with verified records.
+
+---
+
+# USER DASHBOARD WELCOME EXPERIENCE
+
+When a new staff member logs in for the first time:
+
+Display:
+
+Welcome to ESARA
+
+Current Rank
+
+Current Research Score
+
+Promotion Readiness
+
+Research Impact Summary
+
+Publication Statistics
+
+Research Recommendations
+
+AI-generated suggestions for improving research performance.
+
+The user should immediately see a complete research analytics dashboard even if publication data had to be generated temporarily.

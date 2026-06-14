@@ -1,0 +1,490 @@
+# ESARA CORRECTION AND ENHANCEMENT PROMPT
+
+The current implementation is incomplete and does not satisfy the ESARA system requirements.
+
+Refactor and extend the system with the following mandatory features.
+
+---
+
+# 1. SEED DEFAULT USERS
+
+Create automatic seed data when the system starts for the first time.
+
+Create the following accounts:
+
+## Super Admin
+
+Name: System Administrator
+
+Role: Admin
+
+Email:
+[admin@esara.edu](mailto:admin@esara.edu)
+
+Password:
+Admin123@
+
+---
+
+## ICT Personnel
+
+Name: ICT Officer
+
+Role: ICT Personnel
+
+Email:
+[ict@esara.edu](mailto:ict@esara.edu)
+
+Password:
+ICT123@
+
+---
+
+## Academic Staff 1
+
+Name:
+Ojugo Arnold
+
+Role:
+Academic Staff
+
+Email:
+[arnold.ojugo@esara.edu](mailto:arnold.ojugo@esara.edu)
+
+Password:
+Staff123@
+
+---
+
+## Academic Staff 2
+
+Name:
+Dr Akazwe Maureen
+
+Role:
+Academic Staff
+
+Email:
+[maureen.akazwe@esara.edu](mailto:maureen.akazwe@esara.edu)
+
+Password:
+Staff123@
+
+---
+
+## Academic Staff 3
+
+Name:
+Dr Patrick Ejeh
+
+Role:
+Academic Staff
+
+Email:
+[patrick.ejeh@esara.edu](mailto:patrick.ejeh@esara.edu)
+
+Password:
+Staff123@
+
+---
+
+Store these users in Upstash Redis.
+
+Create a startup initialization process that checks if users already exist before creating them.
+
+---
+
+# 2. GENERATE RESEARCH DATA
+
+If OpenAlex cannot find publication records:
+
+Generate realistic publication records.
+
+Each lecturer should have:
+
+10–30 publications
+
+Publication years between 2018 and current year
+
+Citation counts
+
+Journal names
+
+DOIs
+
+Publication categories
+
+Research areas
+
+Journal quality metrics
+
+Impact scores
+
+h-index contributions
+
+Mark generated records as:
+
+source = "simulated"
+
+This ensures dashboards always contain meaningful data.
+
+---
+
+# 3. GLOBAL RESEARCH RANKING ENGINE
+
+Implement a ranking engine.
+
+Every academic staff member must be ranked against all other academic staff.
+
+Example:
+
+Rank 1 of 3
+
+Rank 2 of 3
+
+Rank 3 of 3
+
+Ranking must be determined by:
+
+Highest SRS Score
+
+Then:
+
+Highest Citation Count
+
+Then:
+
+Highest h-index
+
+Store rankings separately.
+
+Update rankings whenever:
+
+Publications change
+
+Citations change
+
+SRS recalculates
+
+---
+
+# 4. LECTURER PROFILE ANALYTICS PAGE
+
+Every lecturer must have a dedicated analytics page.
+
+Route:
+
+/dashboard/staff/[id]
+
+The page must display:
+
+Profile Photo
+
+Staff Name
+
+Department
+
+Faculty
+
+Institution
+
+Current Rank
+
+Current SRS Score
+
+Current h-index
+
+Total Citations
+
+Total Publications
+
+Research Area Distribution
+
+Verification Status
+
+Publication Timeline
+
+Research Growth Metrics
+
+---
+
+# 5. PEER COMPARISON MODULE
+
+Each lecturer page must compare the lecturer against peers.
+
+Display:
+
+Current User
+
+vs
+
+Institution Average
+
+vs
+
+Top Performer
+
+Metrics:
+
+Publication Count
+
+Citation Count
+
+h-index
+
+SRS Score
+
+Journal Quality Score
+
+Research Impact Score
+
+Include visual indicators showing whether the lecturer is:
+
+Above Average
+
+Average
+
+Below Average
+
+---
+
+# 6. ADVANCED ANALYTICAL VISUALIZATIONS
+
+The system currently lacks sufficient analytics.
+
+Create the following charts using Recharts.
+
+## Dashboard Overview
+
+Line Chart:
+Research Growth Over Time
+
+Bar Chart:
+Publications Per Lecturer
+
+Bar Chart:
+Citation Counts Per Lecturer
+
+Pie Chart:
+Research Area Distribution
+
+Area Chart:
+Annual Citation Growth
+
+Radar Chart:
+Research Performance Metrics
+
+Treemap:
+Department Contribution Analysis
+
+---
+
+# 7. LECTURER RANKING VISUALIZATION
+
+Create a dedicated leaderboard page.
+
+Display:
+
+Institution Research Ranking
+
+Top Researchers
+
+Bottom Researchers
+
+Fastest Growing Researchers
+
+Most Cited Researchers
+
+Highest h-index Researchers
+
+Provide:
+
+Search
+
+Filtering
+
+Sorting
+
+Pagination
+
+---
+
+# 8. SRS EXPLANATION PANEL
+
+Each lecturer page must contain:
+
+"Why am I ranked here?"
+
+Provide a breakdown:
+
+Publication Contribution:
+25%
+
+Citation Contribution:
+35%
+
+h-index Contribution:
+25%
+
+Journal Quality Contribution:
+15%
+
+Display the exact numerical contribution of each component.
+
+Example:
+
+Publication Score = 21.5
+
+Citation Score = 34.8
+
+h-index Score = 18.4
+
+Journal Quality Score = 13.6
+
+Total SRS = 88.3
+
+Visualize using:
+
+Progress Bars
+
+Contribution Pie Chart
+
+---
+
+# 9. ADMIN RESEARCH OVERSIGHT CENTER
+
+The admin dashboard must include:
+
+Total Academic Staff
+
+Total Publications
+
+Verified Publications
+
+Pending Verifications
+
+Average Institutional SRS
+
+Average Citation Count
+
+Average h-index
+
+Research Productivity Trends
+
+Department Rankings
+
+Top Performing Staff
+
+Research Impact Heatmap
+
+Institution-wide Leaderboard
+
+Admin must be able to:
+
+Create Accounts
+
+Edit Accounts
+
+Delete Accounts
+
+Reset Passwords
+
+Suspend Users
+
+Activate Users
+
+Assign Roles
+
+View Audit Logs
+
+---
+
+# 10. ICT RESEARCH MANAGEMENT CENTER
+
+ICT Personnel must have:
+
+Publication Validation Queue
+
+Author Verification Queue
+
+OpenAlex Sync Center
+
+Metadata Correction Tools
+
+Duplicate Publication Detection
+
+Journal Quality Assignment Tools
+
+Verification Analytics
+
+Publication Import Logs
+
+Failed Retrieval Logs
+
+Manual Publication Entry
+
+Bulk Publication Upload
+
+---
+
+# 11. DEMONSTRATION MODE
+
+Create Demo Mode.
+
+If no data exists:
+
+Automatically generate:
+
+Departments
+
+Research Areas
+
+Publications
+
+Citations
+
+Scores
+
+Rankings
+
+Charts
+
+This ensures the application always looks complete during demonstrations and presentations.
+
+---
+
+# 12. UI REQUIREMENTS
+
+Design should resemble a premium academic analytics platform.
+
+Inspiration:
+
+Scopus
+
+ResearchGate
+
+Google Scholar
+
+Clarivate
+
+Dimensions
+
+Use:
+
+Large analytics cards
+
+Interactive charts
+
+Animated counters
+
+Hover tooltips
+
+Dark mode
+
+Responsive layouts
+
+Institution-quality visual design
+
+Every page should feel like an executive academic intelligence dashboard rather than a CRUD application.
+
+Refactor the entire application to satisfy all requirements above.

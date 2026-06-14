@@ -1,0 +1,315 @@
+ESARA (Enhanced Staff Assessment Repository Architecture) – Full System Build Prompt
+You are a senior full-stack software architect and engineer.
+Build a production-ready web application called ESARA (Enhanced Staff Assessment Repository Architecture) for evaluating academic staff research performance using bibliometric indicators.
+Technology Stack
+Frontend:
+•	Next.js 15 App Router
+•	TypeScript
+•	Tailwind CSS
+•	Shadcn UI
+•	Recharts for analytics
+•	React Hook Form
+•	Zod Validation
+Backend:
+•	Next.js Server Actions and API Routes
+•	Upstash Redis as the primary database
+•	Upstash Redis Search where needed
+•	Vercel deployment ready
+Authentication:
+•	NextAuth/Auth.js
+•	JWT sessions
+•	Role-Based Access Control
+Roles:
+1.	Super Admin
+2.	ICT Personnel
+3.	Academic Staff
+Environment Variables
+I will provide:
+KV_REST_API_READ_ONLY_TOKEN="ggAAAAAAAX4uAAIgcDJXBwwjOBuWwMM9A2ah1KX6pGcEQtbBKInlp2JPpqI0Pw"
+KV_REST_API_TOKEN="gQAAAAAAAX4uAAIgcDIyMWFiNDUyMjVjNDI0ZTM3OTM5N2Y3NDQwYTBhYzM4NQ"
+KV_REST_API_URL="https://peaceful-boar-97838.upstash.io"
+KV_URL="rediss://default:gQAAAAAAAX4uAAIgcDIyMWFiNDUyMjVjNDI0ZTM3OTM5N2Y3NDQwYTBhYzM4NQ@peaceful-boar-97838.upstash.io:6379"
+REDIS_URL="rediss://default:gQAAAAAAAX4uAAIgcDIyMWFiNDUyMjVjNDI0ZTM3OTM5N2Y3NDQwYTBhYzM4NQ@peaceful-boar-97838.upstash.io:6379"Create .env.example.
+________________________________________
+SYSTEM OVERVIEW
+ESARA evaluates academic staff research performance using:
+•	Publication Count
+•	Citation Count
+•	h-index
+•	Journal Quality Score
+•	Research Impact Score
+The system automatically retrieves and validates publication information, computes Staff Research Scores (SRS), ranks staff members, and provides institutional analytics.
+________________________________________
+OPEN SOURCE ACADEMIC DATA SOURCES
+Use OpenAlex as the primary source.
+Primary API:
+https://api.openalex.org
+Capabilities:
+•	Author Search
+•	Publication Retrieval
+•	Citation Counts
+•	Journal Metadata
+•	Institution Data
+Fallback Mode:
+If no publication data exists:
+Generate realistic prototype data using AI-generated academic records.
+Generate:
+•	Journal Name
+•	Publication Year
+•	Citation Count
+•	Journal Quartile
+•	Impact Score
+Mark generated records as:
+source = "Google Scolar"
+Real records:
+source = "verified"
+________________________________________
+STAFF NAME VERIFICATION ENGINE
+Implement an Academic Identity Verification System.
+When publications are retrieved:
+Step 1:
+Compare Academic Staff Name against publication author names.
+Step 2:
+Perform fuzzy matching using:
+•	Levenshtein Distance
+•	Jaro-Winkler Similarity
+Step 3:
+Assign confidence score:
+95-100 = Verified
+80-94 = Likely Match
+Below 80 = Manual Review
+Store verification results.
+Fields:
+verificationStatus
+verificationScore
+verifiedBy
+The ICT Personnel dashboard must allow manual verification.
+________________________________________
+DATABASE DESIGN (UPSTASH REDIS)
+Users
+user:id
+{
+id,
+fullName,
+email,
+role,
+department,
+faculty,
+passwordHash,
+createdAt
+}
+Publications
+publication:id
+{
+id,
+userId,
+title,
+authors,
+journal,
+publicationYear,
+citations,
+hContribution,
+quartile,
+impactFactor,
+source,
+verificationStatus,
+verificationScore
+}
+Research Scores
+score:id
+{
+id,
+userId,
+publicationScore,
+citationScore,
+hIndexScore,
+journalQualityScore,
+totalSRS,
+ranking
+}
+Audit Logs
+audit:id
+{
+id,
+action,
+performedBy,
+timestamp
+}
+System Settings
+settings:id
+{
+scoreWeights,
+apiSettings,
+institutionName
+}
+________________________________________
+STAFF RESEARCH SCORE ALGORITHM
+Calculate:
+Publication Score = Publications / Max Publications
+Citation Score = Citations / Max Citations
+H Index Score = H Index / Max H Index
+Journal Quality Score = Journal Quality / Max Journal Quality
+SRS =
+(0.25 × Publication Score)
++
+(0.35 × Citation Score)
++
+(0.25 × H Index Score)
++
+(0.15 × Journal Quality Score)
+Store all calculations.
+Recompute automatically whenever publication data changes.
+________________________________________
+DASHBOARD DESIGN
+ADMIN DASHBOARD
+Purpose:
+Institution-wide oversight.
+Layout:
+Top Navigation:
+•	Institution Logo
+•	Notifications
+•	Profile Menu
+Metrics Cards:
+•	Total Academic Staff
+•	Total Publications
+•	Verified Publications
+•	Average SRS
+•	Total Citations
+Analytics:
+•	Research Growth Trend
+•	Department Performance
+•	Top Performing Staff
+Management Modules:
+User Management
+•	Create Account
+•	Edit Account
+•	Delete Account
+•	Suspend Account
+Role Management
+Department Management
+Audit Logs
+System Settings
+Leaderboard
+Export Reports
+Admin can view every record.
+Admin can permanently delete users and publications.
+________________________________________
+ICT PERSONNEL DASHBOARD
+Purpose:
+Research repository management.
+Layout:
+Publication Validation Queue
+Author Verification Center
+Publication Search
+Journal Quality Management
+Functions:
+Import Publications
+Search Authors
+Verify Staff Publications
+Merge Duplicate Records
+Correct Metadata
+Approve or Reject Publications
+Generate Reports
+Manage API Synchronization
+View verification confidence scores
+Monitor failed retrieval requests
+________________________________________
+ACADEMIC STAFF DASHBOARD
+Purpose:
+Personal academic profile.
+Layout:
+Profile Summary
+Research Metrics Cards
+•	Total Publications
+•	Total Citations
+•	h-index
+•	Current SRS
+Research Charts
+Publication Timeline
+Citation Trend
+Journal Distribution
+Publication Repository
+Publication Detail Page
+Research Ranking Position
+Verification Status Panel
+Request Publication Review
+Download Research Portfolio PDF
+________________________________________
+AI FEATURES
+Create an AI Research Assistant.
+Capabilities:
+1.	Explain SRS score.
+2.	Suggest methods to improve ranking.
+3.	Identify publication gaps.
+4.	Recommend higher-impact journals.
+5.	Generate publication summaries.
+Use OpenAI-compatible architecture.
+Keep AI service modular.
+________________________________________
+REPORTING SYSTEM
+Generate:
+Individual Staff Report
+Department Report
+Faculty Report
+Institution Report
+Export:
+PDF
+CSV
+Excel
+Include charts in exports.
+________________________________________
+SEARCH SYSTEM
+Global search across:
+Staff
+Publications
+Departments
+Journals
+Implement instant search using Upstash Redis indexing.
+________________________________________
+ANALYTICS
+Build interactive dashboards using Recharts.
+Include:
+Research Productivity Trend
+Citation Trend
+Top Researchers
+Department Rankings
+Journal Quartile Distribution
+Research Impact Heatmap
+________________________________________
+SECURITY
+Implement:
+Role-Based Access Control
+Input Validation
+Rate Limiting
+Audit Logging
+Protected API Routes
+Password Hashing
+Secure Session Management
+CSRF Protection
+________________________________________
+USER EXPERIENCE
+Design style:
+Modern Academic Analytics Platform
+Inspired by:
+•	Scopus
+•	Google Scholar
+•	ResearchGate
+•	Clarivate Analytics
+Use:
+•	Clean cards
+•	Data-rich dashboards
+•	Responsive design
+•	Mobile support
+•	Light Mode with Dark blue and White 
+________________________________________
+DEPLOYMENT
+Application must be deployable directly on Vercel.
+Provide:
+README.md
+Environment setup guide
+Database initialization scripts
+Seed data generator
+API integration guide
+Deployment instructions
+Generate complete source code with reusable components, scalable architecture, and production-ready standards.
+
