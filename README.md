@@ -14,7 +14,7 @@ Enhanced Staff Assessment Repository Architecture is a Next.js 15 application fo
 ## Setup
 
 1. Install dependencies: `npm install`
-2. Copy `.env.example` to `.env.local` and fill in Upstash, NextAuth, and optional OpenAI values.
+2. Copy `.env.example` to `.env.local` and fill in Upstash, NextAuth, and optional OpenAI values. Generate `NEXTAUTH_SECRET` with `openssl rand -base64 32` and use the same value in production.
 3. Initialize settings: `npm run db:init`
 4. Seed demo users: `npm run db:seed`
 5. Run locally: `npm run dev`
@@ -75,4 +75,4 @@ SRS = 0.25 * publicationScore
 
 ## Deployment
 
-Deploy directly to Vercel, add the environment variables from `.env.example`, then run the seed script locally against the target Upstash instance or from a protected deployment job.
+Deploy directly to Vercel, add the environment variables from `.env.example`, including a stable `NEXTAUTH_SECRET`, then run the seed script locally against the target Upstash instance or from a protected deployment job.
