@@ -22,6 +22,15 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
+  logger: {
+    error(code, metadata) {
+      if (code === "JWT_SESSION_ERROR") {
+        console.warn("[next-auth][warn][JWT_SESSION_ERROR]", metadata);
+        return;
+      }
+      console.error("[next-auth][error]", code, metadata);
+    }
+  },
   providers: [
     CredentialsProvider({
       name: "Email and password",
