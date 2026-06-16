@@ -1,16 +1,19 @@
 import { Redis } from "@upstash/redis";
 
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+
 export const redis =
-  process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  redisUrl && redisToken
     ? new Redis({
-        url: process.env.KV_REST_API_URL,
-        token: process.env.KV_REST_API_TOKEN
+        url: redisUrl,
+        token: redisToken
       })
     : null;
 
 export function requireRedis() {
   if (!redis) {
-    throw new Error("Upstash Redis is not configured. Set KV_REST_API_URL and KV_REST_API_TOKEN.");
+    throw new Error("Upstash Redis is not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN, or KV_REST_API_URL and KV_REST_API_TOKEN.");
   }
   return redis;
 }
