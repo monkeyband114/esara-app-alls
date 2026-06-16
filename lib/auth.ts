@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { readNonEmptyEnv } from "@/lib/env";
 import { getUserByEmail } from "@/lib/repository";
 import type { Role } from "@/lib/types";
 
@@ -19,7 +20,7 @@ const demoPasswords: Record<string, string> = {
 };
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
+  secret: readNonEmptyEnv("NEXTAUTH_SECRET", "AUTH_SECRET"),
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   logger: {
