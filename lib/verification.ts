@@ -49,14 +49,28 @@ function normalize(name: string) {
   return name.toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim();
 }
 
+function nameTokens(name: string) {
+  return normalize(name)
+    .split(" ")
+    .filter((token) => token.length > 1);
+}
+
 export function verifyAuthorName(staffName: string, authors: string[]) {
   const target = normalize(staffName);
+  const targetTokens = nameTokens(staffName);
   const best = Math.max(
     ...authors.map((author) => {
       const candidate = normalize(author);
+      const candidateTokens = nameTokens(author);
+      const shared = targetTokens.filter((token) => candidateTokens.includes(token));
+      const hasFirst = targetTokens[0] ? candidateTokens.includes(targetTokens[0]) : false;
+      const hasLast = targetTokens[targetTokens.length - 1] ? candidateTokens.includes(targetTokens[targetTokens.length - 1]) : false;
+      const tokenScore = targetTokens.length ? (shared.length / targetTokens.length) * 100 : 0;
       const lev = 1 - levenshtein(target, candidate) / Math.max(target.length, candidate.length, 1);
       const jw = jaroWinkler(target, candidate);
-      return Math.round(((lev * 0.45 + jw * 0.55) * 100 + Number.EPSILON) * 100) / 100;
+      const fuzzyScore = (lev * 0.35 + jw * 0.65) * 100;
+      const score = Math.max(fuzzyScore, tokenScore, hasFirst && hasLast ? 96 : 0);
+      return Math.round((score + Number.EPSILON) * 100) / 100;
     }),
     0
   );

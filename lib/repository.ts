@@ -122,7 +122,7 @@ export async function listPublications(userId?: string): Promise<Publication[]> 
   if (!redis || isProductionBuild) return userId ? samplePublications.filter((publication) => publication.userId === userId) : samplePublications;
   await ensureInitialized();
   const ids = await redis.smembers<string[]>(INDEXES.publications);
-  if (!ids.length) return userId ? samplePublications.filter((publication) => publication.userId === userId) : samplePublications;
+  if (!ids.length) return [];
   const rows = await redis.mget<Publication[]>(...ids.map((id) => key("publication", id)));
   const publications = rows.filter(Boolean);
   return userId ? publications.filter((publication) => publication.userId === userId) : publications;
@@ -139,7 +139,7 @@ export async function listScores(): Promise<ResearchScore[]> {
   if (!redis || isProductionBuild) return sampleScores;
   await ensureInitialized();
   const ids = await redis.smembers<string[]>(INDEXES.scores);
-  if (!ids.length) return sampleScores;
+  if (!ids.length) return [];
   const rows = await redis.mget<ResearchScore[]>(...ids.map((id) => key("score", id)));
   return rows.filter(Boolean).sort((a, b) => a.ranking - b.ranking);
 }
@@ -158,7 +158,7 @@ export async function listRankings(): Promise<StaffRanking[]> {
   if (!redis || isProductionBuild) return sampleRankings;
   await ensureInitialized();
   const ids = await redis.smembers<string[]>(INDEXES.rankings);
-  if (!ids.length) return sampleRankings;
+  if (!ids.length) return [];
   const rows = await redis.mget<StaffRanking[]>(...ids.map((id) => key("ranking", id)));
   return rows.filter(Boolean).sort((a, b) => a.rank - b.rank);
 }
