@@ -1,3 +1,4 @@
+import { readNonEmptyEnv } from "@/lib/env";
 import type { Publication } from "@/lib/types";
 import { attachVerification } from "@/lib/verification";
 
@@ -94,11 +95,49 @@ function authorSearchTerms(staffName: string) {
   return [...terms].filter((term) => term.trim().length >= 3);
 }
 
+export class OpenAlexError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "OpenAlexError";
+  }
+}
+
+const MAX_RATE_LIMIT_RETRIES = 1;
+const MAX_RETRY_WAIT_MS = 15_000;
+
+function retryDelayMs(response: Response) {
+  const seconds = Number(response.headers.get("retry-after"));
+  return Math.min((Number.isFinite(seconds) && seconds > 0 ? seconds : 2) * 1000, MAX_RETRY_WAIT_MS);
+}
+
 async function openAlexGet<T>(path: string, params: URLSearchParams) {
-  if (process.env.OPENALEX_MAILTO) params.set("mailto", process.env.OPENALEX_MAILTO);
-  const response = await fetch(`https://api.openalex.org/${path}?${params.toString()}`, { next: { revalidate: 86400 } });
-  if (!response.ok) throw new Error(`OpenAlex request failed with ${response.status}`);
-  return (await response.json()) as T;
+  const mailto = readNonEmptyEnv("OPENALEX_MAILTO");
+  const apiKey = readNonEmptyEnv("OPENALEX_API_KEY");
+  if (mailto) params.set("mailto", mailto);
+  if (apiKey) params.set("api_key", apiKey);
+  const url = `https://api.openalex.org/${path}?${params.toString()}`;
+
+  for (let attempt = 0; ; attempt++) {
+    let response: Response;
+    try {
+      response = await fetch(url, { next: { revalidate: 86400 } });
+    } catch {
+      throw new OpenAlexError("Could not reach OpenAlex. Check your internet connection and try again.", 502);
+    }
+
+    if (response.ok) return (await response.json()) as T;
+
+    if (response.status === 429) {
+      if (attempt < MAX_RATE_LIMIT_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs(response)));
+        continue;
+      }
+      if (!apiKey) console.warn("[openalex] Rate limited. Set OPENALEX_API_KEY (free at https://openalex.org/settings/api) for a dedicated quota.");
+      throw new OpenAlexError("OpenAlex is limiting requests right now. Please wait a minute and try again.", 429);
+    }
+
+    throw new OpenAlexError(`OpenAlex request failed (HTTP ${response.status}). Please try again later.`, 502);
+  }
 }
 
 async function fetchAuthorProfiles(staffName: string) {

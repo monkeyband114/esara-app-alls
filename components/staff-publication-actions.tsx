@@ -18,6 +18,28 @@ type Candidate = {
   researchArea: string;
 };
 
+type ApiBody = { error?: string; imported?: number; candidates?: Candidate[] };
+
+async function postJson(url: string, payload: unknown): Promise<{ ok: boolean; body: ApiBody }> {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const text = await response.text();
+    let body: ApiBody = {};
+    try {
+      body = text ? (JSON.parse(text) as ApiBody) : {};
+    } catch {
+      // Non-JSON body (e.g. an HTML error page); fall back to the caller's default message.
+    }
+    return { ok: response.ok, body };
+  } catch {
+    return { ok: false, body: { error: "Network error. Check your connection and try again." } };
+  }
+}
+
 export function StaffPublicationActions({ userId }: { userId: string }) {
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
@@ -27,44 +49,29 @@ export function StaffPublicationActions({ userId }: { userId: string }) {
   async function importAll() {
     setLoading("all");
     setMessage("");
-    const response = await fetch("/api/openalex/import", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId })
-    });
-    const body = await response.json();
+    const { ok, body } = await postJson("/api/openalex/import", { userId });
     setLoading(null);
-    setMessage(response.ok ? `Imported ${body.imported} OpenAlex publications. Refreshing...` : body.error ?? "Import failed.");
-    if (response.ok) window.location.reload();
+    setMessage(ok ? `Imported ${body.imported ?? 0} OpenAlex publications. Refreshing...` : body.error ?? "Import failed.");
+    if (ok) window.location.reload();
   }
 
   async function searchOpenAlex(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading("search");
     setMessage("");
-    const response = await fetch("/api/openalex/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, query })
-    });
-    const body = await response.json();
+    const { ok, body } = await postJson("/api/openalex/search", { userId, query });
     setLoading(null);
-    setCandidates(response.ok ? body.candidates ?? [] : []);
-    setMessage(response.ok ? `${body.candidates?.length ?? 0} OpenAlex matches found.` : body.error ?? "OpenAlex search failed.");
+    setCandidates(ok ? body.candidates ?? [] : []);
+    setMessage(ok ? `${body.candidates?.length ?? 0} OpenAlex matches found.` : body.error ?? "OpenAlex search failed.");
   }
 
   async function importCandidate(candidate: Candidate) {
     setLoading(candidate.id);
     setMessage("");
-    const response = await fetch("/api/openalex/import-one", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, query: candidate.id })
-    });
-    const body = await response.json();
+    const { ok, body } = await postJson("/api/openalex/import-one", { userId, query: candidate.id });
     setLoading(null);
-    setMessage(response.ok ? "Added OpenAlex publication. Refreshing..." : body.error ?? "Publication was not found in OpenAlex.");
-    if (response.ok) window.location.reload();
+    setMessage(ok ? "Added OpenAlex publication. Refreshing..." : body.error ?? "Publication was not found in OpenAlex.");
+    if (ok) window.location.reload();
   }
 
   return (
