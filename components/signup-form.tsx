@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { callApi } from "@/lib/client-api";
 
 const fields = [
   ["fullName", "Full Name", "text"],
@@ -33,18 +35,20 @@ export function SignupForm() {
       return;
     }
     setLoading(true);
-    const response = await fetch("/api/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const body = await response.json();
-    setLoading(false);
-    if (!response.ok) {
+    const { ok, body } = await callApi("/api/signup", { body: payload });
+    if (!ok) {
+      setLoading(false);
       setError(body.error ?? "Could not create account.");
       return;
     }
-    router.push(`/onboarding?userId=${encodeURIComponent(body.userId)}&mode=${body.mode}`);
+    // Sign the new account in (replacing any previous session) so the dashboard opens straight away.
+    const result = await signIn("credentials", { email: String(payload.email).trim(), password: String(payload.password), redirect: false });
+    if (!result?.ok) {
+      setLoading(false);
+      router.push("/login");
+      return;
+    }
+    window.location.assign("/onboarding");
   }
 
   return (

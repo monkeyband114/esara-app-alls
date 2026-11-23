@@ -1,3 +1,4 @@
+import { nameTokens } from "@/lib/names";
 import type { Publication, VerificationStatus } from "@/lib/types";
 
 function levenshtein(a: string, b: string) {
@@ -45,14 +46,9 @@ function jaroWinkler(first: string, second: string) {
   return jaro + Math.min(prefix === -1 ? 4 : prefix, 4) * 0.1 * (1 - jaro);
 }
 
+// Titles such as "Dr" are dropped so "Dr Patrick Ejeh" compares against "Patrick Ejeh" on equal terms.
 function normalize(name: string) {
-  return name.toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim();
-}
-
-function nameTokens(name: string) {
-  return normalize(name)
-    .split(" ")
-    .filter((token) => token.length > 1);
+  return nameTokens(name).join(" ");
 }
 
 export function verifyAuthorName(staffName: string, authors: string[]) {

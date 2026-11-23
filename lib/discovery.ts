@@ -1,6 +1,7 @@
-import { fetchOpenAlexPublications } from "@/lib/openalex";
-import { getSettings, listPublications, listUsers, saveRankings, saveScores, upsertPublication } from "@/lib/repository";
-import { calculateScores, calculateStaffRankings } from "@/lib/scoring";
+import { nameMatchScore, nameTokens } from "@/lib/names";
+import { fetchOpenAlexPublications, openAlexGet } from "@/lib/openalex";
+import { recalculateInstitutionMetrics } from "@/lib/recalculate";
+import { logAudit, upsertPublication } from "@/lib/repository";
 import type { User } from "@/lib/types";
 
 type OpenAlexAuthor = {
@@ -31,7 +32,7 @@ function textScore(needle?: string, haystack?: string) {
 }
 
 function matchConfidence(user: User, author: OpenAlexAuthor) {
-  const name = textScore(user.fullName, author.display_name) * 45;
+  const name = (nameMatchScore(user.fullName, author.display_name) / 100) * 45;
   const institution = textScore(user.institution, author.last_known_institution?.display_name) * 20;
   const department = textScore(user.department, author.topics?.map((topic) => topic.display_name).join(" ")) * 10;
   const area = textScore(user.researchArea, author.topics?.map((topic) => topic.display_name).join(" ")) * 15;
@@ -40,11 +41,9 @@ function matchConfidence(user: User, author: OpenAlexAuthor) {
 }
 
 export async function searchOpenAlexAuthors(fullName: string) {
-  const params = new URLSearchParams({ search: fullName, per_page: "8" });
-  if (process.env.OPENALEX_MAILTO) params.set("mailto", process.env.OPENALEX_MAILTO);
-  const response = await fetch(`https://api.openalex.org/authors?${params.toString()}`, { next: { revalidate: 3600 } });
-  if (!response.ok) return [];
-  const body = (await response.json()) as { results: OpenAlexAuthor[] };
+  const term = nameTokens(fullName).join(" ");
+  if (!term) return [];
+  const body = await openAlexGet<{ results: OpenAlexAuthor[] }>("authors", new URLSearchParams({ search: term, per_page: "8" }));
   return body.results ?? [];
 }
 
@@ -54,13 +53,15 @@ export async function runAcademicDiscovery(user: User): Promise<DiscoveryResult>
     .map((author) => ({ author, confidence: matchConfidence(user, author) }))
     .sort((a, b) => b.confidence - a.confidence);
   const best = ranked[0];
-  const matched = best && best.confidence >= 55;
+  // An exact name match alone (45) is enough to start importing; each work is still filtered by author-name match.
+  const matched = Boolean(best && best.confidence >= 40);
   const publications = matched ? await fetchOpenAlexPublications(user.id, user.fullName).catch(() => []) : [];
   await Promise.all(publications.map((publication) => upsertPublication(publication)));
-  const [users, allPublications, settings] = await Promise.all([listUsers(), listPublications(), getSettings()]);
-  const scores = calculateScores(users, allPublications, settings);
-  await saveScores(scores);
-  await saveRankings(calculateStaffRankings(users, allPublications, scores));
+  await recalculateInstitutionMetrics();
+  await logAudit(
+    `Signup discovery for ${user.fullName}: ${matched ? `matched OpenAlex author (${best?.confidence}%)` : "no confident OpenAlex match"}, imported ${publications.length} publications`,
+    "system"
+  );
   return {
     status: matched ? "matched" : "no_openalex_match",
     confidence: best?.confidence ?? 0,

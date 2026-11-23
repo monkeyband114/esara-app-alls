@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookOpen, CheckCircle2, Clock3, Quote, TrendingUp, Users } from "lucide-react";
 import {
   AnnualCitationAreaChart,
@@ -21,8 +22,10 @@ import {
   researchAreaDistribution
 } from "@/lib/analytics";
 import { listPublications, listScores, listUsers } from "@/lib/repository";
+import { requirePageUser } from "@/lib/session";
 
 export default async function DashboardPage() {
+  await requirePageUser(["SUPER_ADMIN", "ICT_PERSONNEL"]);
   const [users, publications, scores] = await Promise.all([listUsers(), listPublications(), listScores()]);
   const metrics = dashboardMetrics(users, publications, scores);
   const lecturerRows = lecturerMetrics(users, publications, scores);
@@ -42,7 +45,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <section>
         <h1 className="text-2xl font-bold tracking-normal">Institution Research Intelligence</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Demo mode keeps rankings, charts, publications, citations, and verification queues populated automatically.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Live institution-wide research metrics from imported OpenAlex publications.</p>
       </section>
       <section className="dashboard-grid">
         <MetricCard title="Academic Staff" value={String(metrics.staffCount)} icon={Users} />
@@ -73,7 +76,7 @@ export default async function DashboardPage() {
               {topStaff.map(({ score, user }) => (
                 <tr key={score.id}>
                   <Td>{score.rankLabel}</Td>
-                  <Td>{user?.fullName}</Td>
+                  <Td>{user ? <Link href={`/dashboard/staff/${user.id}`} className="font-semibold text-primary">{user.fullName}</Link> : "Unknown"}</Td>
                   <Td>{user?.department}</Td>
                   <Td>{score.totalSRS.toFixed(1)}</Td>
                   <Td>{score.citationCount}</Td>

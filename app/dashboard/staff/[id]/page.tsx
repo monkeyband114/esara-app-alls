@@ -15,6 +15,8 @@ import { Td, Th, Table } from "@/components/ui/table";
 import { peerComparison, researchAreaDistribution, srsContributions, trendByYear } from "@/lib/analytics";
 import { listPublications, listRankings, listScores, listUsers } from "@/lib/repository";
 import { hIndexFromPublications } from "@/lib/scoring";
+import { requirePageUser } from "@/lib/session";
+import { Avatar } from "@/components/avatar";
 
 function indicator(value: number, average: number) {
   if (value > average * 1.08) return { label: "Above Average", className: "bg-emerald-100 text-emerald-800" };
@@ -23,6 +25,7 @@ function indicator(value: number, average: number) {
 }
 
 export default async function StaffAnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
+  await requirePageUser();
   const { id } = await params;
   const [users, allPublications, scores, rankings] = await Promise.all([listUsers(), listPublications(), listScores(), listRankings()]);
   const user = users.find((item) => item.id === id && item.role === "ACADEMIC_STAFF");
@@ -47,11 +50,11 @@ export default async function StaffAnalyticsPage({ params }: { params: Promise<{
   return (
     <div className="space-y-6">
       <section className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 place-items-center rounded-lg bg-primary text-xl font-bold text-primary-foreground">{user.profilePhoto ?? user.fullName.slice(0, 2)}</div>
-          <div>
+        <div className="flex min-w-0 items-center gap-4">
+          <Avatar name={user.fullName} photo={user.profilePhoto} className="h-16 w-16 text-xl" />
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold">{user.fullName}</h1>
-            <p className="text-sm text-muted-foreground">{user.department} · {user.faculty} · {user.institution}</p>
+            <p className="break-words text-sm text-muted-foreground">{user.department} · {user.faculty} · {user.institution}</p>
             <p className="mt-1 text-sm font-semibold text-primary">{ranking ? `Rank ${ranking.rank} of ${ranking.total}` : score?.rankLabel}</p>
           </div>
         </div>

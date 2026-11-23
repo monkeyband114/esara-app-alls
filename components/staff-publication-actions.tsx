@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { DatabaseZap, PlusCircle, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, DatabaseZap, Download, PlusCircle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { callApi } from "@/lib/client-api";
 
 type Candidate = {
   id: string;
@@ -16,67 +18,70 @@ type Candidate = {
   matchScore: number;
   citations: number;
   researchArea: string;
+  imported?: boolean;
 };
 
-type ApiBody = { error?: string; imported?: number; candidates?: Candidate[] };
+type Status = { tone: "info" | "error" | "success"; text: string } | null;
 
-async function postJson(url: string, payload: unknown): Promise<{ ok: boolean; body: ApiBody }> {
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const text = await response.text();
-    let body: ApiBody = {};
-    try {
-      body = text ? (JSON.parse(text) as ApiBody) : {};
-    } catch {
-      // Non-JSON body (e.g. an HTML error page); fall back to the caller's default message.
-    }
-    return { ok: response.ok, body };
-  } catch {
-    return { ok: false, body: { error: "Network error. Check your connection and try again." } };
-  }
-}
+const toneClass = { info: "text-muted-foreground", error: "text-danger", success: "text-success" };
 
 export function StaffPublicationActions({ userId }: { userId: string }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<Status>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [loading, setLoading] = useState<"all" | "search" | string | null>(null);
+  const [loading, setLoading] = useState<"all" | "search" | "selected" | string | null>(null);
+
+  function markImported(ids: string[]) {
+    const done = new Set(ids);
+    setCandidates((current) => current.map((candidate) => (done.has(candidate.id) ? { ...candidate, imported: true } : candidate)));
+  }
 
   async function importAll() {
     setLoading("all");
-    setMessage("");
-    const { ok, body } = await postJson("/api/openalex/import", { userId });
+    setStatus({ tone: "info", text: "Searching your OpenAlex author profile. This can take up to a minute..." });
+    const { ok, body } = await callApi<{ imported?: number; message?: string }>("/api/openalex/import", { body: { userId } });
     setLoading(null);
-    setMessage(ok ? `Imported ${body.imported ?? 0} OpenAlex publications. Refreshing...` : body.error ?? "Import failed.");
-    if (ok) window.location.reload();
+    if (!ok) return setStatus({ tone: "error", text: body.error ?? "Import failed." });
+    if (!body.imported) return setStatus({ tone: "info", text: body.message ?? "No new OpenAlex publications were found." });
+    setStatus({ tone: "success", text: `Imported ${body.imported} OpenAlex publications.` });
+    router.refresh();
   }
 
   async function searchOpenAlex(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!query.trim()) return setStatus({ tone: "error", text: "Enter a title, keyword, DOI, or name to search." });
     setLoading("search");
-    setMessage("");
-    const { ok, body } = await postJson("/api/openalex/search", { userId, query });
+    setStatus(null);
+    const { ok, body } = await callApi<{ candidates?: Candidate[] }>("/api/openalex/search", { body: { userId, query } });
     setLoading(null);
-    setCandidates(ok ? body.candidates ?? [] : []);
-    setMessage(ok ? `${body.candidates?.length ?? 0} OpenAlex matches found.` : body.error ?? "OpenAlex search failed.");
+    const found = ok ? body.candidates ?? [] : [];
+    setCandidates(found);
+    if (!ok) return setStatus({ tone: "error", text: body.error ?? "OpenAlex search failed." });
+    setStatus({
+      tone: "info",
+      text: found.length
+        ? `${found.length} OpenAlex matches found. Add them one by one, or import all of them.`
+        : "No OpenAlex works matched your name for that search. Try a title, DOI, or another spelling of your name."
+    });
   }
 
-  async function importCandidate(candidate: Candidate) {
-    setLoading(candidate.id);
-    setMessage("");
-    const { ok, body } = await postJson("/api/openalex/import-one", { userId, query: candidate.id });
+  async function importIds(ids: string[], key: string) {
+    setLoading(key);
+    setStatus(null);
+    const { ok, body } = await callApi<{ imported?: number }>("/api/openalex/import-selected", { body: { userId, ids } });
     setLoading(null);
-    setMessage(ok ? "Added OpenAlex publication. Refreshing..." : body.error ?? "Publication was not found in OpenAlex.");
-    if (ok) window.location.reload();
+    if (!ok) return setStatus({ tone: "error", text: body.error ?? "Import failed." });
+    markImported(ids);
+    setStatus({ tone: "success", text: `Imported ${body.imported ?? ids.length} publication${(body.imported ?? ids.length) === 1 ? "" : "s"}. Your scores have been updated.` });
+    router.refresh();
   }
+
+  const pending = candidates.filter((candidate) => !candidate.imported);
 
   return (
     <div className="space-y-4">
-      <Button onClick={importAll} disabled={loading !== null}>
+      <Button onClick={importAll} disabled={loading !== null} className="w-full sm:w-auto">
         <DatabaseZap className="h-4 w-4" />
         {loading === "all" ? "Importing..." : "Import My OpenAlex Publications"}
       </Button>
@@ -84,39 +89,59 @@ export function StaffPublicationActions({ userId }: { userId: string }) {
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search author name, partial name, title, DOI, journal, or keyword"
+          placeholder="Search title, DOI, journal, keyword, or name spelling"
+          aria-label="Search OpenAlex"
         />
         <Button disabled={loading !== null}>
           <Search className="h-4 w-4" />
           {loading === "search" ? "Searching..." : "Search OpenAlex"}
         </Button>
       </form>
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+      {status ? <p role="status" className={`text-sm ${toneClass[status.tone]}`}>{status.text}</p> : null}
       {candidates.length ? (
         <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold">{candidates.length} results · {candidates.length - pending.length} already in your profile</p>
+            <Button
+              className="h-9 px-3"
+              disabled={loading !== null || !pending.length}
+              onClick={() => importIds(pending.map((candidate) => candidate.id), "selected")}
+            >
+              <Download className="h-4 w-4" />
+              {loading === "selected" ? "Importing..." : pending.length ? `Import all ${pending.length} matches` : "All imported"}
+            </Button>
+          </div>
           {candidates.map((candidate) => (
             <div key={candidate.id} className="rounded-md border border-border bg-white p-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold">{candidate.title}</h3>
+                  <h3 className="break-words text-sm font-semibold">{candidate.title}</h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {candidate.journal} - {candidate.publicationYear} - {candidate.citations} citations
+                    {candidate.journal} · {candidate.publicationYear} · {candidate.citations} citations
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Matched author: {candidate.matchedAuthor || "Unknown"} - {candidate.matchScore}% confidence
+                    Matched author: {candidate.matchedAuthor || "No name match"} · {candidate.matchScore}% confidence
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">{candidate.authors.slice(0, 6).join(", ")}</p>
+                  <p className="mt-1 break-words text-xs text-muted-foreground">{candidate.authors.slice(0, 6).join(", ")}</p>
                 </div>
-                <Button className="h-9 px-3" disabled={loading !== null} onClick={() => importCandidate(candidate)}>
-                  <PlusCircle className="h-4 w-4" />
-                  {loading === candidate.id ? "Adding..." : "Add"}
-                </Button>
+                {candidate.imported ? (
+                  <span className="inline-flex h-9 shrink-0 items-center gap-1 self-start rounded-md bg-success/10 px-3 text-sm font-semibold text-success">
+                    <Check className="h-4 w-4" /> Added
+                  </span>
+                ) : (
+                  <Button className="h-9 shrink-0 self-start px-3" disabled={loading !== null} onClick={() => importIds([candidate.id], candidate.id)}>
+                    <PlusCircle className="h-4 w-4" />
+                    {loading === candidate.id ? "Adding..." : "Add"}
+                  </Button>
+                )}
               </div>
             </div>
           ))}
         </div>
       ) : null}
-      <p className="text-xs text-muted-foreground">Search and import use OpenAlex only; ESARA filters results by the staff name or partial author-name match before saving.</p>
+      <p className="text-xs text-muted-foreground">
+        Search and import use OpenAlex only. Imported works are checked against your name; uncertain matches go to the ICT verification queue.
+      </p>
     </div>
   );
 }

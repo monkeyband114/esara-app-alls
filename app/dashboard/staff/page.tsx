@@ -1,25 +1,19 @@
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { BookOpen, FileText, Lightbulb, Quote, TrendingUp, Trophy, UserRound } from "lucide-react";
+import { Avatar } from "@/components/avatar";
 import { AreaDistributionChart, QuartileChart, TrendChart } from "@/components/charts";
 import { MetricCard } from "@/components/metric-card";
 import { StaffPublicationActions } from "@/components/staff-publication-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Td, Th, Table } from "@/components/ui/table";
-import { authOptions } from "@/lib/auth";
 import { researchAreaDistribution, trendByYear } from "@/lib/analytics";
 import { listPublications, listRankings, listScores, listUsers } from "@/lib/repository";
+import { requirePageUser } from "@/lib/session";
 
 export default async function StaffPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/login");
-  if (session.user.role !== "ACADEMIC_STAFF") redirect("/dashboard/entry");
-
+  const currentUser = await requirePageUser(["ACADEMIC_STAFF"]);
   const [users, allPublications, scores, rankings] = await Promise.all([listUsers(), listPublications(), listScores(), listRankings()]);
-  const currentUser = users.find((user) => user.id === session.user.id) ?? users.find((user) => user.email === session.user.email);
-  if (!currentUser) redirect("/login");
 
   const publications = allPublications.filter((publication) => publication.userId === currentUser.id);
   const score = scores.find((item) => item.userId === currentUser.id);
@@ -36,14 +30,12 @@ export default async function StaffPage() {
   return (
     <div className="space-y-6">
       <section className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="grid h-14 w-14 place-items-center rounded-lg bg-primary text-lg font-bold text-primary-foreground">
-            {currentUser.profilePhoto ?? currentUser.fullName.slice(0, 2)}
-          </div>
-          <div>
+        <div className="flex min-w-0 items-center gap-4">
+          <Avatar name={currentUser.fullName} photo={currentUser.profilePhoto} />
+          <div className="min-w-0">
             <p className="text-sm font-semibold text-primary">Academic Staff Dashboard</p>
             <h1 className="text-2xl font-bold">{currentUser.fullName}</h1>
-            <p className="text-sm text-muted-foreground">{currentUser.department} · {currentUser.faculty} · {currentUser.institution}</p>
+            <p className="break-words text-sm text-muted-foreground">{currentUser.department} · {currentUser.faculty} · {currentUser.institution}</p>
           </div>
         </div>
         <Link href={`/dashboard/staff/${currentUser.id}`} className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-primary ring-1 ring-border">
@@ -83,7 +75,7 @@ export default async function StaffPage() {
           <CardHeader><CardTitle>My Profile Data</CardTitle></CardHeader>
           <CardContent>
             <div className="grid gap-3 text-sm md:grid-cols-2">
-              <p><span className="font-semibold">Email:</span> {currentUser.email}</p>
+              <p className="break-all"><span className="font-semibold">Email:</span> {currentUser.email}</p>
               <p><span className="font-semibold">Department:</span> {currentUser.department}</p>
               <p><span className="font-semibold">Faculty:</span> {currentUser.faculty}</p>
               <p><span className="font-semibold">Institution:</span> {currentUser.institution}</p>

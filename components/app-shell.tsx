@@ -1,33 +1,54 @@
 import Link from "next/link";
-import { Bell, Search, Shield } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Shield } from "lucide-react";
+import { MainNav, type NavLink } from "@/components/main-nav";
+import { roleLabel } from "@/lib/repository";
+import { getCurrentUser, homeFor } from "@/lib/session";
+import type { User } from "@/lib/types";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+function linksFor(user: User | null): NavLink[] {
+  if (!user) return [{ href: "/dashboard/leaderboard", label: "Leaderboard" }];
+  if (user.role === "SUPER_ADMIN") {
+    return [
+      { href: "/dashboard/admin", label: "Admin" },
+      { href: "/dashboard", label: "Overview" },
+      { href: "/dashboard/ict", label: "ICT Center" },
+      { href: "/dashboard/leaderboard", label: "Leaderboard" },
+      { href: "/research-discovery", label: "Discovery" }
+    ];
+  }
+  if (user.role === "ICT_PERSONNEL") {
+    return [
+      { href: "/dashboard/ict", label: "ICT Center" },
+      { href: "/dashboard", label: "Overview" },
+      { href: "/dashboard/leaderboard", label: "Leaderboard" },
+      { href: "/research-discovery", label: "Discovery" }
+    ];
+  }
+  return [
+    { href: "/dashboard/staff", label: "My Dashboard" },
+    { href: `/dashboard/staff/${user.id}`, label: "My Analytics" },
+    { href: "/dashboard/leaderboard", label: "Leaderboard" },
+    { href: "/research-discovery", label: "Discovery" }
+  ];
+}
+
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "?";
+}
+
+export async function AppShell({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+  const navUser = user ? { name: user.fullName, email: user.email, roleLabel: roleLabel(user.role), initials: initials(user.fullName) } : null;
+
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
-          <Link href="/dashboard" className="flex items-center gap-2 font-bold text-primary">
+      <header className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
+        <div className="relative mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
+          <Link href={user ? homeFor(user.role) : "/"} className="mr-2 flex shrink-0 items-center gap-2 font-bold text-primary">
             <Shield className="h-6 w-6" />
             ESARA
           </Link>
-          <div className="relative ml-auto hidden w-full max-w-md md:block">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input aria-label="Global search" placeholder="Search staff, publications, journals" className="pl-9" />
-          </div>
-          <Link href="/dashboard/admin" className="text-sm font-medium text-muted-foreground">
-            Admin
-          </Link>
-          <Link href="/dashboard/ict" className="text-sm font-medium text-muted-foreground">
-            ICT
-          </Link>
-          <Link href="/dashboard/staff" className="text-sm font-medium text-muted-foreground">
-            Staff
-          </Link>
-          <Link href="/dashboard/leaderboard" className="text-sm font-medium text-muted-foreground">
-            Leaderboard
-          </Link>
-          <Bell className="h-5 w-5 text-muted-foreground" />
+          <MainNav links={linksFor(user)} user={navUser} />
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>

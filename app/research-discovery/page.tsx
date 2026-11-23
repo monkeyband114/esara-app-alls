@@ -1,22 +1,24 @@
-import Link from "next/link";
+import { AppShell } from "@/components/app-shell";
 import { ResearchDiscoveryClient } from "@/components/research-discovery-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { requirePageUser } from "@/lib/session";
 
-export default function ResearchDiscoveryPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ResearchDiscoveryPage() {
+  const user = await requirePageUser();
+
   return (
-    <main className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto max-w-6xl">
-        <Link href="/" className="text-sm font-semibold text-primary">ESARA</Link>
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>OpenAlex Research Discovery</CardTitle>
-            <p className="text-sm text-muted-foreground">Search, select, import, and claim publications for an academic profile.</p>
-          </CardHeader>
-          <CardContent>
-            <ResearchDiscoveryClient />
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+    <AppShell>
+      <Card className="mx-auto max-w-6xl">
+        <CardHeader>
+          <CardTitle>OpenAlex Research Discovery</CardTitle>
+          <p className="text-sm text-muted-foreground">Search OpenAlex by publication, author, DOI, journal, or institution, then import your publications.</p>
+        </CardHeader>
+        <CardContent>
+          <ResearchDiscoveryClient canImport={user.role === "ACADEMIC_STAFF"} />
+        </CardContent>
+      </Card>
+    </AppShell>
   );
 }

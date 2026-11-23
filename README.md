@@ -65,14 +65,23 @@ SRS = 0.25 * publicationScore
 
 ## API Routes
 
-- `POST /api/openalex/import` with `{ "userId": "..." }`, followed by automatic SRS and ranking recalculation
-- `POST /api/signup`
-- `GET /api/research-discovery?mode=author&q=name`
+All routes except signup, auth, and health checks require a signed-in session. Academic staff can only act on their own profile; ICT and admins may pass any academic staff `userId`.
+
+- `POST /api/openalex/search` with `{ "userId"?, "query" }`: candidate works (title, keyword, DOI, or the author's name as OpenAlex spells it)
+- `POST /api/openalex/import` with `{ "userId"? }`: import every work on the staff member's matching OpenAlex author profiles
+- `POST /api/openalex/import-selected` with `{ "userId"?, "ids": [OpenAlex ids or DOIs] }`: import chosen works (max 100)
+- `POST /api/openalex/import-one` with `{ "userId"?, "query" }`
+- `PATCH /api/publications/[id]` with `{ "status": "VERIFIED" | "REJECTED" | "MANUAL_REVIEW" }` (ICT, admin)
+- `POST /api/admin/users`, `PATCH|DELETE /api/admin/users/[id]` (admin)
+- `POST /api/signup` (public; OpenAlex discovery runs in the background after the response)
+- `GET /api/research-discovery?mode=publication|author|doi|journal|institution&q=...`
 - `POST /api/publication-claims`
 - `GET /api/search?q=keyword`
-- `GET /api/reports/csv`
+- `GET /api/reports/csv` (ICT, admin)
 - `GET|POST /api/auth/[...nextauth]`
+
+Every import recalculates SRS scores and rankings.
 
 ## Deployment
 
-Deploy directly to Vercel, add the environment variables from `.env.example`, including a stable `NEXTAUTH_SECRET`, then run the seed script locally against the target Upstash instance or from a protected deployment job.
+Deploy directly to Vercel and add the environment variables from `.env.example` to the project (Settings → Environment Variables), including a stable `NEXTAUTH_SECRET`, `NEXTAUTH_URL` set to the production URL, and `OPENALEX_API_KEY`. Without an API key, OpenAlex shares one small anonymous daily budget across every app on Vercel's IP addresses and searches fail with rate-limit errors. Then run the seed script locally against the target Upstash instance or from a protected deployment job.

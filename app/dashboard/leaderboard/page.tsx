@@ -3,8 +3,10 @@ import { LeaderboardTable } from "@/components/leaderboard-table";
 import { MetricCard } from "@/components/metric-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listRankings, listUsers } from "@/lib/repository";
+import { requirePageUser } from "@/lib/session";
 
 export default async function LeaderboardPage() {
+  await requirePageUser();
   const [users, rankings] = await Promise.all([listUsers(), listRankings()]);
   const rows = rankings.map((ranking) => {
     const user = users.find((item) => item.id === ranking.userId);

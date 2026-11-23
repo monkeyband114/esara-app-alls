@@ -2,7 +2,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-lg border bg-card text-card-foreground shadow-soft", className)} {...props} />;
+  // min-w-0: inside grid/flex layouts a card would otherwise grow to its content's width (charts measure their
+  // container, so they can lock in a too-wide size) and spill past the screen edge on phones.
+  return <div className={cn("min-w-0 rounded-lg border bg-card text-card-foreground shadow-soft", className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

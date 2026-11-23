@@ -44,14 +44,14 @@ export function LeaderboardTable({ rows }: { rows: Row[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
-        <div className="relative min-w-64 flex-1">
+        <div className="relative w-full sm:w-auto sm:min-w-64 sm:flex-1">
           <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="Search leaderboard" className="pl-9" />
+          <Input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="Search leaderboard" aria-label="Search leaderboard" className="pl-9" />
         </div>
-        <select className="h-10 rounded-md border bg-white px-3 text-sm" value={department} onChange={(event) => { setDepartment(event.target.value); setPage(1); }}>
+        <select aria-label="Department" className="h-10 min-w-0 flex-1 rounded-md border bg-white px-3 text-sm sm:flex-none" value={department} onChange={(event) => { setDepartment(event.target.value); setPage(1); }}>
           {departments.map((item) => <option key={item}>{item}</option>)}
         </select>
-        <select className="h-10 rounded-md border bg-white px-3 text-sm" value={sort} onChange={(event) => setSort(event.target.value as keyof Row)}>
+        <select aria-label="Sort by" className="h-10 min-w-0 flex-1 rounded-md border bg-white px-3 text-sm sm:flex-none" value={sort} onChange={(event) => setSort(event.target.value as keyof Row)}>
           <option value="rank">Rank</option>
           <option value="srs">SRS</option>
           <option value="citations">Citations</option>
